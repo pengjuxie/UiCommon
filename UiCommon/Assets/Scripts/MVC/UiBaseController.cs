@@ -8,13 +8,47 @@ namespace UiCommon
     public abstract class UiBaseController<TView> : UiBaseController where TView : UiBaseView
     {
         protected TView m_View;
-
-        public UiBaseController ParentController { get; private set; }
+        
         protected List<UiBaseController> m_ChildControllers = null;
-
+        private List<RegisterItem> m_ListenedItems = new List<RegisterItem>();
+        
         public bool IsInited { get; private set; }
         public bool IsOpened { get; private set; }
         public bool IsShown { get; private set; }
+
+        class RegisterItem
+        {
+            public UiBaseModel Model;
+            public int EventID;
+            public Action Callback;
+        }
+
+        protected void RegisterToModel<T>(int eventId, Action callback) where T : UiBaseModel, new()
+        {
+            var model = UiModelManager.GetModel<T>();
+            model.AddListener(eventId, callback);
+            
+            RegisterItem item = new RegisterItem()
+            {
+                Model = model,
+                EventID = eventId,
+                Callback = callback
+            };
+            m_ListenedItems.Add(item);
+        }
+        
+        protected void OpenChildController<T>() where T : UiBaseController
+        {
+            if (m_ChildControllers == null)
+            {
+                m_ChildControllers = new List<UiBaseController>();
+            }
+            var childCtrl = UiControllerManager.OpenUi<T>(this.transform);
+            if (childCtrl != null)
+            {
+                m_ChildControllers.Add(childCtrl);
+            }
+        }
 
         protected sealed override void Init()
         {
@@ -37,6 +71,26 @@ namespace UiCommon
             {
                 IsOpened = false;
                 OnUiClose();
+                
+                if (m_ListenedItems.Count > 0)
+                {
+                    foreach (var item in m_ListenedItems)
+                    {
+                        item.Model.RemoveListener(item.EventID, item.Callback);
+                    }
+                    m_ListenedItems.Clear();
+                }
+
+                if (m_ChildControllers.Count != 0)
+                {
+                    for (int i = 0; i < m_ChildControllers.Count; i++)
+                    {
+                        m_ChildControllers[i].Close();
+                    }
+                    
+                    m_ChildControllers.Clear();
+                }
+                
                 if (NeedReturn2Pool())
                 {
                     UiControllerManager.RecycleUiController(this);
