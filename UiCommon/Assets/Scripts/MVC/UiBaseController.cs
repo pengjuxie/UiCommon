@@ -12,7 +12,6 @@ namespace UiCommon
         protected List<UiBaseController> m_ChildControllers = null;
         private List<RegisterItem> m_ListenedItems = new List<RegisterItem>();
         
-        public bool IsInited { get; private set; }
         public bool IsOpened { get; private set; }
         public bool IsShown { get; private set; }
 
@@ -50,13 +49,12 @@ namespace UiCommon
             }
         }
 
-        protected sealed override void Init()
+        private void Awake()
         {
             OnUiInit();
-            IsInited = true;
         }
 
-        protected sealed override void Open()
+        internal sealed override void Open()
         {
             if (!IsOpened)
             {
@@ -72,15 +70,6 @@ namespace UiCommon
                 IsOpened = false;
                 OnUiClose();
                 
-                if (m_ListenedItems.Count > 0)
-                {
-                    foreach (var item in m_ListenedItems)
-                    {
-                        item.Model.RemoveListener(item.EventID, item.Callback);
-                    }
-                    m_ListenedItems.Clear();
-                }
-
                 if (m_ChildControllers.Count != 0)
                 {
                     for (int i = 0; i < m_ChildControllers.Count; i++)
@@ -109,6 +98,7 @@ namespace UiCommon
             {
                 IsShown = true;
                 OnUiShow();
+                gameObject.SetActive(true);
             }
         }
 
@@ -118,11 +108,21 @@ namespace UiCommon
             {
                 IsShown = false;
                 OnUiHide();
+                gameObject.SetActive(false);
             }
         }
 
         public sealed override void Destroy()
         {
+            if (m_ListenedItems.Count > 0)
+            {
+                foreach (var item in m_ListenedItems)
+                {
+                    item.Model.RemoveListener(item.EventID, item.Callback);
+                }
+                m_ListenedItems.Clear();
+            }
+            
             Destroy(gameObject);
         }
 
@@ -139,8 +139,7 @@ namespace UiCommon
 
     public abstract class UiBaseController : MonoBehaviour
     {
-        protected abstract void Init();
-        protected abstract void Open();
+        internal abstract void Open();
         public abstract void Close();
         public abstract void Show();
         public abstract void Hide();

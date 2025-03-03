@@ -12,10 +12,12 @@ namespace UiCommon
         private static Dictionary<Type, Queue<UiBaseController>> m_UiPoolDic =
             new Dictionary<Type, Queue<UiBaseController>>();
 
+        private static GameObject m_Parent;
+
         internal static T OpenUi<T>(Transform parent) where T : UiBaseController
         {
             T controller = GetUiControllerFormPool<T>();
-            if (controller == null)
+            if (controller != null)
             {
                 controller.transform.parent = parent;
                 return controller;
@@ -45,12 +47,18 @@ namespace UiCommon
             {
                 controller = go.AddComponent<T>();
             }
-
+            controller.Open();
             return controller;
         }
 
         internal static void RecycleUiController<T>(T uiController) where T : UiBaseController
         {
+            if (m_Parent == null)
+            {
+                m_Parent = new GameObject("UiPool");
+                m_Parent.SetActive(false);
+            }
+            
             if (uiController != null)
             {
                 if (!m_UiPoolDic.ContainsKey(uiController.GetType()))
@@ -60,17 +68,29 @@ namespace UiCommon
 
                 m_UiPoolDic[uiController.GetType()].Enqueue(uiController);
             }
+
+            uiController.transform.SetParent(m_Parent.transform);
+            uiController.Hide();
         }
 
         internal static T GetUiControllerFormPool<T>() where T : UiBaseController
         {
+            if (m_Parent == null)
+            {
+                m_Parent = new GameObject("UiPool");
+                m_Parent.SetActive(false);
+            }
+            
             if (!m_UiPoolDic.ContainsKey(typeof(T)) || m_UiPoolDic[typeof(T)].Count == 0)
             {
                 return null;
             }
 
             var q = m_UiPoolDic[typeof(T)];
-            return (T)q.Dequeue();
+            var ctrl = q.Dequeue();
+            ctrl.Show();
+            
+            return (T)ctrl;
         }
     }
 }

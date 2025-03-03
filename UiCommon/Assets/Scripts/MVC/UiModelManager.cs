@@ -6,7 +6,7 @@ namespace UiCommon
     {
         private static Dictionary<int, UiBaseModel> m_UiModels;
         
-        public static T GetModel<T>() where T : UiBaseModel, new()
+        internal static T GetModel<T>() where T : UiBaseModel, new()
         {
             if (m_UiModels == null)
             {

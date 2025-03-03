@@ -7,47 +7,47 @@ namespace UiCommon
 {
     public class UiBaseModel
     {
-        private MessageHandler _messageHandler;
+        private MessageHandler m_MessageHandler;
         
         class MessageHandler
         {
-            private Dictionary<int, Delegate> _eventDictionary = new Dictionary<int, Delegate>();
+            private Dictionary<int, Delegate> m_EventDictionary = new Dictionary<int, Delegate>();
             
             public void AddListener(int eventId, Action listener)
             {
-                if (_eventDictionary.ContainsKey(eventId))
+                if (m_EventDictionary.ContainsKey(eventId))
                 {
-                    _eventDictionary[eventId] = Delegate.Combine(_eventDictionary[eventId], listener);
+                    m_EventDictionary[eventId] = Delegate.Combine(m_EventDictionary[eventId], listener);
                 }
                 else
                 {
-                    _eventDictionary[eventId] = listener;
+                    m_EventDictionary[eventId] = listener;
                 }
             }
             
             public void RemoveListener(int eventId, Action listener)
             {
-                if (_eventDictionary.ContainsKey(eventId))
+                if (m_EventDictionary.ContainsKey(eventId))
                 {
-                    var currentDelegate = _eventDictionary[eventId];
+                    var currentDelegate = m_EventDictionary[eventId];
                     currentDelegate = Delegate.Remove(currentDelegate, listener);
 
                     if (currentDelegate == null)
                     {
-                        _eventDictionary.Remove(eventId);
+                        m_EventDictionary.Remove(eventId);
                     }
                     else
                     {
-                        _eventDictionary[eventId] = currentDelegate;
+                        m_EventDictionary[eventId] = currentDelegate;
                     }
                 }
             }
             
             public void TriggerEvent(int eventId)
             {
-                if (_eventDictionary.ContainsKey(eventId))
+                if (m_EventDictionary.ContainsKey(eventId))
                 {
-                    if (_eventDictionary[eventId] is Action callback)
+                    if (m_EventDictionary[eventId] is Action callback)
                     {
                         callback.Invoke();
                     }
@@ -58,17 +58,17 @@ namespace UiCommon
         
         public virtual void Init()
         {
-            _messageHandler = new MessageHandler();
+            m_MessageHandler = new MessageHandler();
         }
         
         public void AddListener(int eventId, Action listener)
         {
-            _messageHandler.AddListener(eventId, listener);
+            m_MessageHandler.AddListener(eventId, listener);
         }
         
         public void RemoveListener(int eventId, Action listener)
         {
-            _messageHandler.RemoveListener(eventId, listener);
+            m_MessageHandler.RemoveListener(eventId, listener);
         }
 
         
